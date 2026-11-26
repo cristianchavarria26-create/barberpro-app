@@ -1,5 +1,6 @@
+
 {
-  "name": "nextjs-postgresql-template",
+  "name": "barberpro-saas",
   "private": true,
   "scripts": {
     "dev": "next dev",
@@ -9,6 +10,8 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
+    "@supabase/ssr": "^0.7.0",
+    "@supabase/supabase-js": "^2.57.0",
     "@types/nodemailer": "^8.0.2",
     "dotenv": "17.3.1",
     "drizzle-orm": "0.45.2",
