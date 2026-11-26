@@ -328,6 +328,7 @@ export default function BookingModal({
 
       if (data.deposit > 0 && data.token) {
         savePending({
+          slug,
           confirmation: data,
           name,
         });
