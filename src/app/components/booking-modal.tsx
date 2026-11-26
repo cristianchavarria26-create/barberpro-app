@@ -726,4 +726,234 @@ export default function BookingModal({
                   placeholder={t.modalPhoneExample}
                   aria-label="Teléfono"
                   value={phone}
+                                    onChange={(event) => setPhone(event.target.value)}
+                  autoComplete="tel"
+                />
+              </label>
+
+              <label>
+                {t.modalEmail} <span>{t.modalOptional}</span>
+                <input
+                  type="email"
+                  maxLength={160}
+                  placeholder={t.modalEmailExample}
+                  aria-label="Correo electrónico"
+                  value={email}
+                  onChange={(event) => setEmail(event.target.value)}
+                  autoComplete="email"
+                />
+              </label>
+            </div>
+
+            {deposit > 0 && (
+              <>
+                <DepositBox
+                  t={t}
+                  price={service.price}
+                  deposit={deposit}
+                  phone={settings.phone}
+                />
+                <label className="deposit-check">
+                  <input
+                    type="checkbox"
+                    required
+                    checked={accepted}
+                    onChange={(event) => setAccepted(event.target.checked)}
+                  />
+                  {fill(t.modalAccept, values)}
+                </label>
+              </>
+            )}
+
+            {error && (
+              <p className="form-error" role="alert">
+                {error}
+              </p>
+            )}
+
+            <button
+              className="button button-dark confirm-button"
+              type="submit"
+              disabled={sending}
+            >
+              {sending
+                ? t.modalSending
+                : deposit > 0
+                  ? fill(t.modalSubmitDeposit, values)
+                  : t.modalSubmit}
+              <ArrowRight size={17} />
+            </button>
+
+            {deposit === 0 && t.modalNoDeposit && (
+              <p className="privacy-note">{t.modalNoDeposit}</p>
+            )}
+          </form>
+        )}
+
+        {step === "success" && confirmation && (
+          <div className="success-step">
+            <div className="success-mark">
+              <Check size={30} strokeWidth={2.5} />
+            </div>
+
+            <p className="eyebrow dark-eyebrow">
+              <span /> {fill(t.modalReference, values)}
+            </p>
+
+            <h2 id="booking-modal-title">
+              {!owes ? (
+                <>
+                  {t.modalDoneTitle1 && (
+                    <>
+                      {t.modalDoneTitle1}
+                      <br />
+                    </>
+                  )}
+                  <em>{t.modalDoneTitle2}</em>
+                </>
+              ) : receiptSent ? (
+                <>
+                  {t.modalSentTitle1 && (
+                    <>
+                      {t.modalSentTitle1}
+                      <br />
+                    </>
+                  )}
+                  <em>{t.modalSentTitle2}</em>
+                </>
+              ) : (
+                <>
+                  {t.modalPendingTitle1 && (
+                    <>
+                      {t.modalPendingTitle1}
+                      <br />
+                    </>
+                  )}
+                  <em>{t.modalPendingTitle2}</em>
+                </>
+              )}
+            </h2>
+
+            <p>
+              {fill(
+                !owes
+                  ? t.modalDoneText
+                  : receiptSent
+                    ? t.modalSentText
+                    : t.modalPendingText,
+                values
+              )}
+            </p>
+
+            <div className="success-details">
+              <div>
+                <CalendarDays size={18} />
+                <span>
+                  {formatDate(confirmation.date)}
+                  <strong>{confirmation.time} hrs</strong>
+                </span>
+              </div>
+              <div>
+                <Scissors size={18} />
+                <span>
+                  {confirmation.service}
+                  <strong>{confirmation.barber}</strong>
+                </span>
+              </div>
+              <div>
+                <MapPin size={18} />
+                <span>
+                  {settings.address}
+                  <strong>
+                    {settings.commune}, {settings.city}
+                  </strong>
+                </span>
+              </div>
+            </div>
+
+            {owes && (
+              <DepositBox
+                t={t}
+                price={confirmation.price}
+                deposit={confirmation.deposit}
+                phone={settings.phone}
+                transfer={{
+                  reference,
+                  barber: confirmation.barber,
+                  instructions: confirmation.instructions,
+                  paidToBarber: confirmation.paidToBarber,
+                }}
+              />
+            )}
+
+            {owes && confirmation.token && (
+              <div className={`receipt-box ${receiptSent ? "is-sent" : ""}`}>
+                <input
+                  ref={fileRef}
+                  type="file"
+                  accept="image/*"
+                  hidden
+                  aria-label={t.receiptButton}
+                  onChange={(event) =>
+                    uploadReceipt(event.target.files?.[0])
+                  }
+                />
+
+                {receiptSent ? (
+                  <p className="receipt-done" role="status">
+                    <Check size={16} />
+                    {t.receiptDone}
+                    <button
+                      type="button"
+                      className="receipt-change"
+                      disabled={uploading}
+                      onClick={() => fileRef.current?.click()}
+                    >
+                      {uploading ? t.receiptUploading : t.receiptChange}
+                    </button>
+                  </p>
+                ) : (
+                  <>
+                    <div>
+                      <strong>{t.receiptTitle}</strong>
+                      <span>{t.receiptText}</span>
+                    </div>
+                    <button
+                      type="button"
+                      className="button button-gold"
+                      disabled={uploading}
+                      onClick={() => fileRef.current?.click()}
+                    >
+                      {uploading ? t.receiptUploading : t.receiptButton}
+                      <Upload size={16} />
+                    </button>
+                  </>
+                )}
+
+                {receiptError && (
+                  <p className="form-error" role="alert">
+                    {receiptError}
+                  </p>
+                )}
+              </div>
+            )}
+
+            <div className="success-actions">
+              <button
+                className="button button-dark"
+                onClick={downloadCalendar}
+              >
+                {t.modalCalendar} <CalendarDays size={16} />
+              </button>
+              <button className="success-close" onClick={onClose}>
+                {t.modalClose}
+              </button>
+            </div>
+          </div>
+        )}
+
+      </div>
+    </div>
+  );
+                        }
               
