@@ -1,21 +1,31 @@
 
 import { and, asc, desc, eq, gte, lte } from "drizzle-orm";
 import { db } from "@/db";
-import { barbers, blocks, reviews, services, settings } from "@/db/schema";
 import {
-  type BarberItem,
-  type BlockItem,
-  type ServiceItem,
-  type SiteSettings,
+  barbers,
+  blocks,
+  reviews,
+  services,
+  settings,
+} from "@/db/schema";
+
+import type {
+  BarberItem,
+  BlockItem,
+  ServiceItem,
+  SiteSettings,
 } from "@/lib/booking";
+
 import { resolveTexts } from "@/lib/texts";
 import { resolveTheme } from "@/lib/theme";
 
 /**
  * Obtiene la configuración de una barbería específica.
- * Ya no existe una configuración global id = 1.
+ * Cada negocio tiene su propia configuración.
  */
-export async function getSettings(businessId: string): Promise<SiteSettings> {
+export async function getSettings(
+  businessId: string
+): Promise<SiteSettings> {
   const [row] = await db
     .select()
     .from(settings)
@@ -26,12 +36,27 @@ export async function getSettings(businessId: string): Promise<SiteSettings> {
     throw new Error("Business settings are missing");
   }
 
-  return row;
+  return {
+    address: row.address,
+    commune: row.commune,
+    city: row.city,
+    phone: row.phone,
+    email: row.email,
+    schedule: row.schedule,
+    requireDeposit: row.requireDeposit,
+    depositAmount: row.depositAmount,
+    paymentInstructions: row.paymentInstructions,
+    heroImage: row.heroImage,
+    aboutImage: row.aboutImage,
+    visitImage: row.visitImage,
+    texts: row.texts,
+    theme: row.theme,
+  };
 }
 
 /**
- * Contenido público de una barbería.
- * Todos los datos se filtran por businessId.
+ * Obtiene todos los datos públicos de una barbería.
+ * Ninguna consulta mezcla información de otros negocios.
  */
 export async function getSiteData(businessId: string) {
   const siteSettings = await getSettings(businessId);
@@ -99,8 +124,8 @@ export async function getSiteData(businessId: string) {
 }
 
 /**
- * Bloqueos de agenda para una barbería determinada.
- * Busca bloqueos que intersecten el rango de fechas solicitado.
+ * Obtiene los bloqueos de agenda de una barbería.
+ * Solo devuelve bloqueos que intersectan las fechas solicitadas.
  */
 export async function getBlocks(
   businessId: string,
@@ -124,3 +149,6 @@ export async function getBlocks(
       )
     );
 }
+
+
+    
