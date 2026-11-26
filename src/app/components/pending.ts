@@ -1,5 +1,5 @@
-// Remembers, on the customer's own device, a reservation whose deposit receipt has not been uploaded
-// yet. If they leave to make the transfer and come back, the site offers to upload it.
+
+// Remembers a reservation with a pending deposit receipt on the customer's device.
 
 export type Confirmation = {
   id: number;
@@ -10,53 +10,85 @@ export type Confirmation = {
   duration: number;
   price: number;
   deposit: number;
-  /** Proves this browser made the reservation; needed to attach the receipt. */
   token: string | null;
-  /** Where to transfer the deposit: the barber's own account, or the shop's general one. */
   instructions: string;
   paidToBarber: boolean;
 };
-export type Pending = { confirmation: Confirmation; name: string };
 
-const KEY = "reserva_abono_pendiente";
-const CHANGED = "reserva-abono-pendiente";
+export type Pending = {
+  slug: string;
+  confirmation: Confirmation;
+  name: string;
+};
+
+const KEY = "barberpro_reserva_abono_pendiente";
+const CHANGED = "barberpro-reserva-abono-pendiente";
 
 export function readPending(): string | null {
   try {
     return window.localStorage.getItem(KEY);
   } catch {
-    return null; // Storage is blocked: nothing is remembered, the upload still works while the page is open.
+    return null;
   }
 }
 
 export function savePending(pending: Pending | null) {
   try {
-    if (pending) window.localStorage.setItem(KEY, JSON.stringify(pending));
-    else window.localStorage.removeItem(KEY);
+    if (pending) {
+      window.localStorage.setItem(KEY, JSON.stringify(pending));
+    } else {
+      window.localStorage.removeItem(KEY);
+    }
   } catch {
-    // Storage is blocked: see readPending.
+    // Storage may be unavailable in the customer's browser.
   }
+
   window.dispatchEvent(new Event(CHANGED));
 }
 
 export function subscribePending(onChange: () => void) {
   window.addEventListener("storage", onChange);
   window.addEventListener(CHANGED, onChange);
+
   return () => {
     window.removeEventListener("storage", onChange);
     window.removeEventListener(CHANGED, onChange);
   };
 }
 
-/** Reads the remembered reservation, ignoring anything malformed or already in the past. */
-export function parsePending(raw: string | null, today: string): Pending | null {
+export function parsePending(
+  raw: string | null,
+  today: string,
+  expectedSlug?: string
+): Pending | null {
   if (!raw) return null;
+
   try {
     const value = JSON.parse(raw);
     const c = value?.confirmation;
-    if (!c || !Number.isInteger(c.id) || typeof c.token !== "string" || typeof c.date !== "string" || c.date < today) return null;
-    if (!(Number(c.deposit) > 0)) return null;
+
+    if (
+      !c ||
+      !Number.isInteger(c.id) ||
+      typeof c.token !== "string" ||
+      typeof c.date !== "string" ||
+      c.date < today ||
+      typeof value.slug !== "string" ||
+      !value.slug
+    ) {
+      return null;
+    }
+
+    if (expectedSlug && value.slug !== expectedSlug) {
+      return null;
+    }
+
+    if (!(Number(c.deposit) > 0)) {
+      return null;
+    }
+
     return {
+      slug: value.slug,
       name: typeof value.name === "string" ? value.name : "",
       confirmation: {
         id: c.id,
