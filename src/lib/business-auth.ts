@@ -26,15 +26,17 @@ export async function getBusinessOwner() {
     return null;
   }
 
+  const now = Date.now();
+
   const trialExpired =
     business.plan === "trial" &&
-    business.trialEndsAt &&
-    business.trialEndsAt.getTime() < Date.now();
+    (!business.trialEndsAt ||
+      business.trialEndsAt.getTime() <= now);
 
   const subscriptionExpired =
     business.plan !== "trial" &&
-    business.subscriptionEndsAt &&
-    business.subscriptionEndsAt.getTime() < Date.now();
+    (!business.subscriptionEndsAt ||
+      business.subscriptionEndsAt.getTime() <= now);
 
   if (trialExpired || subscriptionExpired) {
     return {
